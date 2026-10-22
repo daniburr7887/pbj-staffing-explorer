@@ -1,0 +1,19 @@
+# Data is downloaded/built locally — never committed
+data/*
+!data/.gitkeep
+
+# Secrets
+.Renviron
+.env
+
+# R / RStudio
+.Rhistory
+.RData
+.Rproj.user/
+rsconnect/
+
+# Python
+__pycache__/
+.venv/
+
+.DS_Store
