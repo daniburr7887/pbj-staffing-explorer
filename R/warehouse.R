@@ -30,3 +30,21 @@ build_warehouse <- function(con, csv_paths, sql_dir = "sql") {
   load_raw_pbj(con, csv_paths)
   run_models(con, sql_dir)
 }
+
+# Tables the Shiny app and bot read. Everything else (raw and staging, ~95%
+# of the warehouse) stays local.
+APP_TABLES <- c("dim_facility", "fct_facility_month", "agg_state_month")
+
+# Export the app tables as Parquet so they can be committed and deployed with
+# the app. Parquet (unlike a .duckdb file) doesn't tie the deployed app to
+# the DuckDB version that built it.
+export_app_data <- function(con, out_dir = app_data_dir()) {
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  for (table in APP_TABLES) {
+    path <- file.path(out_dir, paste0(table, ".parquet"))
+    DBI::dbExecute(con, paste0(
+      "COPY (SELECT * FROM ", table, ") TO '", path, "' (FORMAT PARQUET, COMPRESSION ZSTD)"
+    ))
+  }
+  invisible(file.path(out_dir, paste0(APP_TABLES, ".parquet")))
+}

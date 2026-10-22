@@ -26,8 +26,8 @@ HPRD = hours per resident day. Every ratio is computed as `sum(hours) / sum(resi
 ## Architecture
 
 ```
-data.cms.gov catalog ──► pipeline/run_pipeline.R ──► data/pbj.duckdb ──┬──► app.R (Shiny)
-   (quarterly CSVs)         R/warehouse.R + sql/*.sql                  └──► bot/app.py (Slack)
+data.cms.gov catalog ──► pipeline/run_pipeline.R ──► data/pbj.duckdb ──► app_data/*.parquet ──┬──► app.R (Shiny)
+   (quarterly CSVs)         R/warehouse.R + sql/*.sql    (~385 MB, local)   (~5 MB, committed)   └──► bot/app.py (Slack)
 ```
 
 | Model | Grain | Purpose |
@@ -36,6 +36,8 @@ data.cms.gov catalog ──► pipeline/run_pipeline.R ──► data/pbj.duckdb
 | `dim_facility` | facility | Latest name and location for each facility |
 | `fct_facility_month` | facility × month | Summed hours and resident days (zero-census days excluded) |
 | `agg_state_month` | state × month | State rollup for the dashboard and bot |
+
+The last three are exported to `app_data/` as Parquet and committed, so the deployed app needs no pipeline run or database server.
 
 ## Running it
 
@@ -46,8 +48,8 @@ install.packages(c("duckdb", "DBI", "dplyr", "jsonlite", "shiny", "bslib", "DT",
 ```
 
 ```bash
-Rscript pipeline/run_pipeline.R        # download latest 4 quarters + build warehouse
-Rscript -e 'shiny::runApp()'           # launch the dashboard
+Rscript -e 'shiny::runApp()'           # launch the dashboard (uses committed app_data/)
+Rscript pipeline/run_pipeline.R        # optional: rebuild from the latest 4 CMS quarters
 Rscript -e 'testthat::test_dir("tests/testthat")'
 ```
 

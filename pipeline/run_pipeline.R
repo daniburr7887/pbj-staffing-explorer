@@ -1,4 +1,5 @@
-# Download the latest PBJ quarters and (re)build the DuckDB warehouse.
+# Download the latest PBJ quarters, (re)build the DuckDB warehouse, and
+# export the app tables to app_data/.
 #
 # Usage (from the repo root):
 #   Rscript pipeline/run_pipeline.R          # latest 4 quarters
@@ -47,3 +48,8 @@ DBI::dbDisconnect(con, shutdown = TRUE)
 
 invisible(file.rename(tmp_db, db_path))
 message("Warehouse ready at ", db_path)
+
+con <- pbj_connect(read_only = TRUE)
+export_app_data(con)
+DBI::dbDisconnect(con, shutdown = TRUE)
+message("App data exported to ", app_data_dir(), "/")

@@ -25,6 +25,8 @@ The pipeline writes `pbj.duckdb.building` and renames it into place only after e
 ### Server-side facility search
 There are ~15k facilities. Sending all of them to a browser `<select>` freezes the page, so the Shiny selectize input loads matches from the server as the user types.
 
+### Deploy small Parquet exports, not the warehouse
+The full warehouse (~385 MB for a year) is mostly raw and daily staging data that the app never reads. The pipeline exports only `dim_facility`, `fct_facility_month` and `agg_state_month` to `app_data/*.parquet` (~5 MB), which are committed and deployed with the app. The app and bot open an in-memory DuckDB with a view over each file, so their SQL is unchanged. Parquet was chosen over a second `.duckdb` file so the deployed app isn't tied to the DuckDB version that built the data.
+
 ## Open questions
-- **Deployment data:** the full warehouse is too big to commit. Likely plan: the pipeline also exports a slim app database (dimension + monthly marts only) that gets deployed with the app.
 - **Bot hosting:** Socket Mode on a small always-on host vs. HTTP mode on a serverless platform.

@@ -1,7 +1,7 @@
 """Slack bot: /staffing <facility name or CCN> → staffing summary.
 
-Phase 3 of the roadmap — this is a stub. It reads the same DuckDB warehouse
-the Shiny app uses (read-only), so both always show the same numbers.
+Phase 3 of the roadmap — this is a stub. It reads the same app_data/*.parquet
+files the Shiny app uses, so both always show the same numbers.
 
 Run locally with Socket Mode:
     pip install -r bot/requirements.txt
@@ -9,12 +9,13 @@ Run locally with Socket Mode:
 """
 
 import os
+from pathlib import Path
 
 import duckdb
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-DB_PATH = os.environ.get("PBJ_DB_PATH", "data/pbj.duckdb")
+APP_DATA = Path(os.environ.get("PBJ_APP_DATA", "app_data"))
 
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
 
@@ -37,8 +38,16 @@ LIMIT 5
 """
 
 
+def app_connect() -> duckdb.DuckDBPyConnection:
+    """In-memory DuckDB with a view per Parquet file (mirrors R/db.R)."""
+    con = duckdb.connect()
+    for path in APP_DATA.glob("*.parquet"):
+        con.execute(f"CREATE VIEW {path.stem} AS SELECT * FROM read_parquet('{path.resolve()}')")
+    return con
+
+
 def facility_summary(query: str) -> list[tuple]:
-    with duckdb.connect(DB_PATH, read_only=True) as con:
+    with app_connect() as con:
         return con.execute(FACILITY_SUMMARY_SQL, {"q": query.strip()}).fetchall()
 
 

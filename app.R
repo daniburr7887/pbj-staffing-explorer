@@ -4,7 +4,7 @@
 library(shiny)
 library(bslib)
 
-con <- pbj_connect(read_only = TRUE)
+con <- pbj_app_connect()
 onStop(function() DBI::dbDisconnect(con, shutdown = TRUE))
 
 # Small tables are loaded once at startup; facility detail is queried on demand.

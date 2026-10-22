@@ -41,3 +41,21 @@ test_that("state rollup splits months correctly", {
   expect_equal(ind$month, as.Date(c("2025-12-01", "2026-01-01")))
   expect_equal(ind$hrs_total, c(600, 600))
 })
+
+test_that("app data round-trips through Parquet", {
+  con <- fixture_warehouse()
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE))
+  out_dir <- withr::local_tempdir()
+  export_app_data(con, out_dir)
+
+  app_con <- pbj_app_connect(out_dir)
+  on.exit(DBI::dbDisconnect(app_con, shutdown = TRUE), add = TRUE)
+
+  expect_setequal(DBI::dbListTables(app_con), APP_TABLES)
+  for (table in APP_TABLES) {
+    query <- paste("SELECT * FROM", table, "ORDER BY ALL")
+    expect_equal(DBI::dbGetQuery(app_con, query), DBI::dbGetQuery(con, query))
+  }
+  # Leading zeros survive the round trip.
+  expect_true("015009" %in% DBI::dbGetQuery(app_con, "SELECT provnum FROM dim_facility")$provnum)
+})
