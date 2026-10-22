@@ -56,6 +56,11 @@ ui <- page_navbar(
     primary = PBJ_COLORS$accent,
     base_font = font_collection("system-ui", "-apple-system", "Segoe UI", "sans-serif")
   ),
+  header = tags$style(HTML(
+    # Chart SVGs name the server's default sans font, which shinyapps.io
+    # doesn't have, so browsers fell back to serif. Pin the UI sans instead.
+    '.girafe svg text { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif !important; }'
+  )),
   sidebar = sidebar(
     selectInput("period", "Period", choices = period_choices),
     conditionalPanel(
