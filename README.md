@@ -4,6 +4,8 @@ How well staffed are U.S. nursing homes, and how much of that staffing comes fro
 
 **[▶ Live dashboard](https://danielleburr.shinyapps.io/pbj-staffing-explorer/)**
 
+[![States tab: state staffing table beside a county map of Texas](docs/img/dashboard-states.png)](https://danielleburr.shinyapps.io/pbj-staffing-explorer/?tab=States)
+
 This project turns CMS's public **Payroll-Based Journal (PBJ)** data into a small analytics stack:
 
 - **Pipeline:** finds the latest quarterly files in the CMS catalog, downloads them, and builds a DuckDB warehouse with tested SQL models
