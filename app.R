@@ -71,18 +71,22 @@ server <- function(input, output, session) {
     selected <- months[format(months, "%b %Y") == input$state_month]
     df <- add_ratios(state_month[state_month$month == selected, ])
 
+    # Keep columns numeric and format in DT, so sorting is numeric
+    # (formatted strings would sort "12.7%" before "2.2%").
     DT::datatable(
       data.frame(
         State = df$state,
         Facilities = df$facilities,
-        `Total HPRD` = fmt_hprd(df$total_hprd),
-        `RN HPRD` = fmt_hprd(df$rn_hprd),
-        `Contract share` = fmt_pct(df$contract_share),
+        `Total HPRD` = df$total_hprd,
+        `RN HPRD` = df$rn_hprd,
+        `Contract share` = df$contract_share,
         check.names = FALSE
       ),
       rownames = FALSE,
       options = list(pageLength = 60, order = list(list(2, "desc")))
-    )
+    ) |>
+      DT::formatRound(c("Total HPRD", "RN HPRD"), digits = 2) |>
+      DT::formatPercentage("Contract share", digits = 1)
   })
 
   # ---- Facility tab ----
