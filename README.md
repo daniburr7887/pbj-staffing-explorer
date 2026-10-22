@@ -2,6 +2,8 @@
 
 How well staffed are U.S. nursing homes, and how much of that staffing comes from agency (contract) workers?
 
+**[▶ Live dashboard](https://danielleburr.shinyapps.io/pbj-staffing-explorer/)**
+
 This project turns CMS's public **Payroll-Based Journal (PBJ)** data into a small analytics stack:
 
 - **Pipeline:** finds the latest quarterly files in the CMS catalog, downloads them, and builds a DuckDB warehouse with tested SQL models
@@ -51,12 +53,13 @@ install.packages(c("duckdb", "DBI", "dplyr", "jsonlite", "shiny", "bslib", "DT",
 Rscript -e 'shiny::runApp()'           # launch the dashboard (uses committed app_data/)
 Rscript pipeline/run_pipeline.R        # optional: rebuild from the latest 4 CMS quarters
 Rscript -e 'testthat::test_dir("tests/testthat")'
+SHINYAPPS_ACCOUNT=<account> Rscript deploy.R   # deploy app.R, R/ and app_data/ only
 ```
 
 ## Roadmap
 
 - [x] **Phase 1: Pipeline.** Catalog-driven download, DuckDB models, tests on a hand-calculated fixture
-- [ ] **Phase 2: Dashboard.** State and facility tabs *(scaffolded)*; next: county map, weekend vs. weekday gap, contract-share trend, deploy to Posit Connect Cloud
+- [ ] **Phase 2: Dashboard.** State and facility tabs, [deployed to shinyapps.io](https://danielleburr.shinyapps.io/pbj-staffing-explorer/); next: county map, weekend vs. weekday gap, contract-share trend
 - [ ] **Phase 3: Slack bot.** `/staffing` command *(stubbed)*; next: Block Kit layout, xlsx export, scheduled weekly digest
 - [ ] **Phase 4: Validation.** Reconcile against CMS's published Provider Information staffing figures and document any differences
 - [ ] **Phase 5: Write-up.** Findings, plus how I used Claude Code as a development partner
