@@ -31,7 +31,10 @@ theme_pbj <- function() {
       axis.title = ggplot2::element_text(colour = PBJ_COLORS$ink_secondary),
       legend.text = ggplot2::element_text(colour = PBJ_COLORS$ink_secondary),
       legend.position = "top",
-      legend.justification = "left"
+      legend.justification = "left",
+      # Extra right margin: the browser's sans font is wider than the server's
+      # text metrics, so the last axis label would otherwise clip.
+      plot.margin = ggplot2::margin(5.5, 24, 5.5, 5.5)
     )
 }
 
