@@ -14,8 +14,9 @@ SELECT
     sum(hrs_aide)                                       AS hrs_aide,
     sum(hrs_rn + hrs_lpn + hrs_aide)                    AS hrs_total,
     sum(hrs_rn_ctr + hrs_lpn_ctr + hrs_aide_ctr)        AS hrs_total_ctr,
-    sum(census) FILTER (WHERE is_weekend)               AS weekend_resident_days,
-    sum(hrs_rn + hrs_lpn + hrs_aide) FILTER (WHERE is_weekend) AS weekend_hrs_total
+    -- coalesce: a facility-month with no weekend days reported gets 0, not NULL
+    coalesce(sum(census) FILTER (WHERE is_weekend), 0)  AS weekend_resident_days,
+    coalesce(sum(hrs_rn + hrs_lpn + hrs_aide) FILTER (WHERE is_weekend), 0) AS weekend_hrs_total
 FROM stg_pbj_daily
 WHERE census > 0
 GROUP BY ALL;

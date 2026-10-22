@@ -33,7 +33,7 @@ build_warehouse <- function(con, csv_paths, sql_dir = "sql") {
 
 # Tables the Shiny app and bot read. Everything else (raw and staging, ~95%
 # of the warehouse) stays local.
-APP_TABLES <- c("dim_facility", "fct_facility_month", "agg_state_month")
+APP_TABLES <- c("dim_facility", "fct_facility_month", "agg_state_month", "agg_county_month")
 
 # Export the app tables as Parquet so they can be committed and deployed with
 # the app. Parquet (unlike a .duckdb file) doesn't tie the deployed app to

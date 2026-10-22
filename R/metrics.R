@@ -26,7 +26,9 @@ add_ratios <- function(df) {
     df,
     total_hprd = hprd(hrs_total, resident_days),
     rn_hprd = hprd(hrs_rn, resident_days),
-    contract_share = contract_share(hrs_total_ctr, hrs_total)
+    contract_share = contract_share(hrs_total_ctr, hrs_total),
+    weekend_hprd = hprd(weekend_hrs_total, weekend_resident_days),
+    weekday_hprd = hprd(hrs_total - weekend_hrs_total, resident_days - weekend_resident_days)
   )
 }
 
@@ -41,6 +43,8 @@ summarise_staffing <- function(df, ...) {
       hrs_total = sum(hrs_total),
       hrs_rn = sum(hrs_rn),
       hrs_total_ctr = sum(hrs_total_ctr),
+      weekend_resident_days = sum(weekend_resident_days),
+      weekend_hrs_total = sum(weekend_hrs_total),
       .groups = "drop"
     ) |>
     add_ratios()

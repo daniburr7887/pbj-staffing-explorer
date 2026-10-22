@@ -59,3 +59,25 @@ test_that("app data round-trips through Parquet", {
   # Leading zeros survive the round trip.
   expect_true("015009" %in% DBI::dbGetQuery(app_con, "SELECT provnum FROM dim_facility")$provnum)
 })
+
+test_that("facility-months with no weekend days get 0 weekend totals, not NULL", {
+  con <- fixture_warehouse()
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE))
+
+  # 155001 only reports on a Wednesday (Dec 31) and a Monday (Jan 5).
+  wk <- DBI::dbGetQuery(con, "SELECT weekend_resident_days, weekend_hrs_total FROM fct_facility_month WHERE provnum = '155001'")
+  expect_equal(wk$weekend_resident_days, c(0, 0))
+  expect_equal(wk$weekend_hrs_total, c(0, 0))
+})
+
+test_that("county rollup is keyed by state + county code", {
+  con <- fixture_warehouse()
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE))
+
+  cty <- DBI::dbGetQuery(con, "
+    SELECT * FROM agg_county_month WHERE state = 'AL' AND county_code = '059'
+  ")
+  expect_equal(cty$county_name, "Franklin")
+  expect_equal(cty$hrs_total, 400)
+  expect_equal(cty$weekend_hrs_total, 200)
+})

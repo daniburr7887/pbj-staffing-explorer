@@ -28,5 +28,17 @@ There are ~15k facilities. Sending all of them to a browser `<select>` freezes t
 ### Deploy small Parquet exports, not the warehouse
 The full warehouse (~385 MB for a year) is mostly raw and daily staging data that the app never reads. The pipeline exports only `dim_facility`, `fct_facility_month` and `agg_state_month` to `app_data/*.parquet` (~5 MB), which are committed and deployed with the app. The app and bot open an in-memory DuckDB with a view over each file, so their SQL is unchanged. Parquet was chosen over a second `.duckdb` file so the deployed app isn't tied to the DuckDB version that built the data.
 
+### Map counties by FIPS code, and say what can't be drawn
+County outlines come from the `maps` package and are joined on state + county FIPS code rather than county name, which avoids mismatches like "St. Louis" vs. "st louis". Three gaps are shown to the user instead of hidden:
+- **Alaska, Hawaii and territories** have no outlines in the package, so the map shows a message instead.
+- **Connecticut** replaced its 8 counties with 9 planning regions in 2022. CMS reports the new regions but the package only has the old counties, so none would match; the map says so instead of drawing an all-gray state.
+- **Virginia independent cities** (26 with nursing homes) mostly have no outline. The map caption lists every place with data that isn't drawn.
+
+### Weekend gap
+CMS star ratings look at weekend staffing separately because it tends to dip. The fact table stores weekend hours and resident days alongside the totals, so weekday figures are derived as total minus weekend at any grain. A facility-month with no weekend days gets 0, not NULL, so the subtraction never goes missing, and weekend HPRD is NA rather than 0 when there were no weekend resident days.
+
+### Chart design
+Charts use ggiraph for hover tooltips. Colors follow one rule per job: the facility is a blue accent against its state in gray (emphasis, not two competing series), weekday vs. weekend are two steps of one blue, and the county map is a single-hue sequential ramp with a separate neutral for "no data". The palette was checked with a colorblind-safety validator.
+
 ## Open questions
 - **Bot hosting:** Socket Mode on a small always-on host vs. HTTP mode on a serverless platform.

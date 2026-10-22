@@ -7,7 +7,7 @@ How well staffed are U.S. nursing homes, and how much of that staffing comes fro
 This project turns CMS's public **Payroll-Based Journal (PBJ)** data into a small analytics stack:
 
 - **Pipeline:** finds the latest quarterly files in the CMS catalog, downloads them, and builds a DuckDB warehouse with tested SQL models
-- **Dashboard:** an R Shiny app for comparing states and drilling into any of ~15,000 facilities
+- **Dashboard:** an R Shiny app with national trends, a state table with county maps, a weekday-vs-weekend comparison, and a drill-down into any of ~15,000 facilities
 - **Slack bot:** a `/staffing <facility>` command that returns a facility's staffing summary *(in progress)*
 
 ## The data
@@ -38,15 +38,27 @@ data.cms.gov catalog ──► pipeline/run_pipeline.R ──► data/pbj.duckdb
 | `dim_facility` | facility | Latest name and location for each facility |
 | `fct_facility_month` | facility × month | Summed hours and resident days (zero-census days excluded) |
 | `agg_state_month` | state × month | State rollup for the dashboard and bot |
+| `agg_county_month` | state × county × month | County rollup for the county map |
 
-The last three are exported to `app_data/` as Parquet and committed, so the deployed app needs no pipeline run or database server.
+Everything except `stg_pbj_daily` is exported to `app_data/` as Parquet and committed, so the deployed app needs no pipeline run or database server.
+
+## Dashboard
+
+| Tab | What it shows |
+|---|---|
+| [**Overview**](https://danielleburr.shinyapps.io/pbj-staffing-explorer/?tab=Overview) | National HPRD, RN HPRD, weekend gap and contract share, plus monthly trends |
+| [**States**](https://danielleburr.shinyapps.io/pbj-staffing-explorer/?tab=States) | Sortable state table; click a state to map its counties |
+| [**Weekends**](https://danielleburr.shinyapps.io/pbj-staffing-explorer/?tab=Weekends) | Weekday vs. weekend staffing for every state, sorted by the size of the drop |
+| [**Facility**](https://danielleburr.shinyapps.io/pbj-staffing-explorer/?facility=075338) | Any facility's staffing and contract share against its state average |
+
+Links can open a tab (`?tab=Weekends`) or a facility by CMS provider number (`?facility=075338`).
 
 ## Running it
 
 Requires R ≥ 4.2.
 
 ```r
-install.packages(c("duckdb", "DBI", "dplyr", "jsonlite", "shiny", "bslib", "DT", "ggplot2", "testthat"))
+install.packages(c("duckdb", "DBI", "dplyr", "jsonlite", "shiny", "bslib", "DT", "ggplot2", "ggiraph", "maps", "testthat"))
 ```
 
 ```bash
@@ -59,7 +71,7 @@ SHINYAPPS_ACCOUNT=<account> Rscript deploy.R   # deploy app.R, R/ and app_data/ 
 ## Roadmap
 
 - [x] **Phase 1: Pipeline.** Catalog-driven download, DuckDB models, tests on a hand-calculated fixture
-- [ ] **Phase 2: Dashboard.** State and facility tabs, [deployed to shinyapps.io](https://danielleburr.shinyapps.io/pbj-staffing-explorer/); next: county map, weekend vs. weekday gap, contract-share trend
+- [x] **Phase 2: Dashboard.** Overview, States (with county map), Weekends and Facility tabs, hover tooltips throughout, [deployed to shinyapps.io](https://danielleburr.shinyapps.io/pbj-staffing-explorer/)
 - [ ] **Phase 3: Slack bot.** `/staffing` command *(stubbed)*; next: Block Kit layout, xlsx export, scheduled weekly digest
 - [ ] **Phase 4: Validation.** Reconcile against CMS's published Provider Information staffing figures and document any differences
 - [ ] **Phase 5: Write-up.** Findings, plus how I used Claude Code as a development partner
