@@ -10,7 +10,6 @@ This project turns CMS's public **Payroll-Based Journal (PBJ)** data into a smal
 
 - **Pipeline:** finds the latest quarterly files in the CMS catalog, downloads them, and builds a DuckDB warehouse with tested SQL models
 - **Dashboard:** an R Shiny app with national trends, a state table with county maps, a weekday-vs-weekend comparison, and a drill-down into any of ~15,000 facilities
-- **Slack bot:** a `/staffing <facility>` command that returns a facility's staffing summary *(in progress)*
 
 ## The data
 
@@ -30,8 +29,8 @@ HPRD = hours per resident day. Every ratio is computed as `sum(hours) / sum(resi
 ## Architecture
 
 ```
-data.cms.gov catalog ──► pipeline/run_pipeline.R ──► data/pbj.duckdb ──► app_data/*.parquet ──┬──► app.R (Shiny)
-   (quarterly CSVs)         R/warehouse.R + sql/*.sql    (~385 MB, local)   (~5 MB, committed)   └──► bot/app.py (Slack)
+data.cms.gov catalog ──► pipeline/run_pipeline.R ──► data/pbj.duckdb ──► app_data/*.parquet ──► app.R (Shiny)
+   (quarterly CSVs)         R/warehouse.R + sql/*.sql    (~385 MB, local)   (~5 MB, committed)
 ```
 
 | Model | Grain | Purpose |
@@ -39,7 +38,7 @@ data.cms.gov catalog ──► pipeline/run_pipeline.R ──► data/pbj.duckdb
 | `stg_pbj_daily` | facility × day | Typed, renamed, hours grouped into RN / LPN / aide, employee vs. contract |
 | `dim_facility` | facility | Latest name and location for each facility |
 | `fct_facility_month` | facility × month | Summed hours and resident days (zero-census days excluded) |
-| `agg_state_month` | state × month | State rollup for the dashboard and bot |
+| `agg_state_month` | state × month | State rollup for the dashboard |
 | `agg_county_month` | state × county × month | County rollup for the county map |
 
 Everything except `stg_pbj_daily` is exported to `app_data/` as Parquet and committed, so the deployed app needs no pipeline run or database server.
@@ -74,10 +73,9 @@ SHINYAPPS_ACCOUNT=<account> Rscript deploy.R   # deploy app.R, R/ and app_data/ 
 
 - [x] **Phase 1: Pipeline.** Catalog-driven download, DuckDB models, tests on a hand-calculated fixture
 - [x] **Phase 2: Dashboard.** Overview, States (with county map), Weekends and Facility tabs, hover tooltips throughout, [deployed to shinyapps.io](https://danielleburr.shinyapps.io/pbj-staffing-explorer/)
-- [ ] **Phase 3: Slack bot.** `/staffing` command *(stubbed)*; next: Block Kit layout, xlsx export, scheduled weekly digest
-- [ ] **Phase 4: Validation.** Reconcile against CMS's published Provider Information staffing figures and document any differences
-- [ ] **Phase 5: Write-up.** Findings, plus how I used Claude Code as a development partner
+- [ ] **Phase 3: Validation.** Reconcile against CMS's published Provider Information staffing figures and document any differences
+- [ ] **Phase 4: Write-up.** Findings, plus how I used Claude Code as a development partner
 
 ## About
 
-Built by [Danielle Davis](https://www.linkedin.com/in/danielle-davis-560152142/). The patterns here (migrating BI dashboards to code, checking numbers against the source, server-side filtering for large dropdowns, Slack-delivered reports) come from my work as a BI developer in healthcare staffing.
+Built by [Danielle Davis](https://www.linkedin.com/in/danielle-davis-560152142/). The patterns here (migrating BI dashboards to code, checking numbers against the source, server-side filtering for large dropdowns, Slack-delivered reports) come from my work as a business intelligence analyst in healthcare staffing.

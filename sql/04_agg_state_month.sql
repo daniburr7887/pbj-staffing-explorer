@@ -1,4 +1,4 @@
--- State x month rollup for the dashboard's overview tab and the bot.
+-- State x month rollup for the dashboard's overview, states and weekends tabs.
 CREATE OR REPLACE TABLE agg_state_month AS
 SELECT
     f.state,

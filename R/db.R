@@ -2,7 +2,7 @@
 #
 # Two data stores:
 #   data/pbj.duckdb  full warehouse built by pipeline/run_pipeline.R (local only)
-#   app_data/*.parquet  the small tables the app and bot read (committed)
+#   app_data/*.parquet  the small tables the app reads (committed)
 
 pbj_db_path <- function() {
   Sys.getenv("PBJ_DB_PATH", "data/pbj.duckdb")

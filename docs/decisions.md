@@ -3,7 +3,7 @@
 A running log of choices made and why. Newest at the bottom.
 
 ### DuckDB instead of Postgres
-The whole warehouse is a single file with no server to run, and the data volume (~5M rows/year) is small for a columnar engine. The Shiny app and the bot open it read-only, so a dashboard session can't block a pipeline rebuild.
+The whole warehouse is a single file with no server to run, and the data volume (~5M rows/year) is small for a columnar engine. The pipeline is the only writer, and the app reads exported copies, so a dashboard session can never block a rebuild.
 
 ### Discover quarters from the CMS catalog
 CMS publishes each quarter as a separate dataset with its own URL. The pipeline reads `data.cms.gov/data.json` and picks the latest N quarters, so new releases need no code change.
@@ -14,7 +14,7 @@ CMS publishes each quarter as a separate dataset with its own URL. The pipeline 
 `COUNTY_FIPS` in PBJ is only the 3-digit county part. A full 5-digit FIPS would need a state-code crosswalk, so the column is called `county_code` to avoid implying it is a full FIPS.
 
 ### Store sums, compute ratios late
-Marts hold summed hours and resident days, never pre-computed HPRD. Averaging facility HPRDs gives a 30-bed facility the same weight as a 300-bed one, which doesn't match how CMS reports. `R/metrics.R` and the bot SQL both compute `sum(hours) / sum(resident_days)`, and a test covers the difference.
+Marts hold summed hours and resident days, never pre-computed HPRD. Averaging facility HPRDs gives a 30-bed facility the same weight as a 300-bed one, which doesn't match how CMS reports. `R/metrics.R` always computes `sum(hours) / sum(resident_days)`, and a test covers the difference.
 
 ### Exclude zero-census days
 Days with no residents have hours but no resident days. They are dropped from the facility-month fact, matching CMS methodology.
@@ -26,7 +26,7 @@ The pipeline writes `pbj.duckdb.building` and renames it into place only after e
 There are ~15k facilities. Sending all of them to a browser `<select>` freezes the page, so the Shiny selectize input loads matches from the server as the user types.
 
 ### Deploy small Parquet exports, not the warehouse
-The full warehouse (~385 MB for a year) is mostly raw and daily staging data that the app never reads. The pipeline exports only `dim_facility`, `fct_facility_month` and `agg_state_month` to `app_data/*.parquet` (~5 MB), which are committed and deployed with the app. The app and bot open an in-memory DuckDB with a view over each file, so their SQL is unchanged. Parquet was chosen over a second `.duckdb` file so the deployed app isn't tied to the DuckDB version that built the data.
+The full warehouse (~385 MB for a year) is mostly raw and daily staging data that the app never reads. The pipeline exports only `dim_facility`, `fct_facility_month`, `agg_state_month` and `agg_county_month` to `app_data/*.parquet` (~5 MB), which are committed and deployed with the app. The app opens an in-memory DuckDB with a view over each file, so its SQL is unchanged. Parquet was chosen over a second `.duckdb` file so the deployed app isn't tied to the DuckDB version that built the data.
 
 ### Map counties by FIPS code, and say what can't be drawn
 County outlines come from the `maps` package and are joined on state + county FIPS code rather than county name, which avoids mismatches like "St. Louis" vs. "st louis". Three gaps are shown to the user instead of hidden:
@@ -40,5 +40,3 @@ CMS star ratings look at weekend staffing separately because it tends to dip. Th
 ### Chart design
 Charts use ggiraph for hover tooltips. Colors follow one rule per job: the facility is a blue accent against its state in gray (emphasis, not two competing series), weekday vs. weekend are two steps of one blue, and the county map is a single-hue sequential ramp with a separate neutral for "no data". The palette was checked with a colorblind-safety validator.
 
-## Open questions
-- **Bot hosting:** Socket Mode on a small always-on host vs. HTTP mode on a serverless platform.

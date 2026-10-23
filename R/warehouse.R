@@ -31,7 +31,7 @@ build_warehouse <- function(con, csv_paths, sql_dir = "sql") {
   run_models(con, sql_dir)
 }
 
-# Tables the Shiny app and bot read. Everything else (raw and staging, ~95%
+# Tables the Shiny app reads. Everything else (raw and staging, ~95%
 # of the warehouse) stays local.
 APP_TABLES <- c("dim_facility", "fct_facility_month", "agg_state_month", "agg_county_month")
 
